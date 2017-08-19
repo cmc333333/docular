@@ -27,13 +27,13 @@ class Cursor:
             raise KeyError('No {0} element'.format(identifier))
         return self.__class__(self._tree, identifier)
 
-    def add_child(self, category: str, pos: Optional[str] = None, **attrs):
+    def add_child(self, tag: str, tag_number: Optional[str] = None, **attrs):
         order = self._tree.out_degree(self._idx)
-        if pos is None:
-            pos = str(order + 1)
-        identifier = '{0}__{1}_{2}'.format(self._idx, category, pos)
+        if tag_number is None:
+            tag_number = str(order + 1)
+        identifier = '{0}__{1}_{2}'.format(self._idx, tag, tag_number)
         self._tree.add_node(identifier, struct=DocStruct(
-            identifier=identifier, category=category, **attrs))
+            identifier=identifier, tag=tag, tag_number=tag_number, **attrs))
         self._tree.add_edge(self._idx, identifier, order=order)
         return self.__class__(self._tree, identifier)
 
@@ -91,8 +91,10 @@ class Cursor:
         return Cursor(graph, root_struct.identifier)
 
 
-def new_tree(identifier, **attrs):
+def new_tree(tag, tag_number, **attrs):
     graph = nx.DiGraph()
-    graph.add_node(
-        identifier, struct=DocStruct(identifier=identifier, **attrs))
+    identifier = '{0}_{1}'.format(tag, tag_number)
+    graph.add_node(identifier, struct=DocStruct(
+        identifier=identifier, tag=tag, tag_number=tag_number, **attrs
+    ))
     return Cursor(graph, identifier)

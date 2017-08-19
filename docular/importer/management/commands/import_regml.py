@@ -1,4 +1,5 @@
 import argparse
+import logging
 from datetime import datetime
 from lxml import etree
 
@@ -7,13 +8,16 @@ from django.core.management.base import BaseCommand
 from docular.structure.models import DocStruct, Entity, Work
 from docular.structure.network import new_tree
 
+logger = logging.getLogger(__name__)
+
 
 class RegMLParser:
     @staticmethod
     def subpart(parent, xml):
         letter = xml.attrib['subpartLetter']
         return parent.add_child(
-            'subpart', letter, number='Subpart ' + letter,
+            'subpart', letter,
+            marker='Subpart ' + letter,
             title=xml.findtext('./{eregs}title')
         )
 
@@ -21,26 +25,27 @@ class RegMLParser:
     def section(parent, xml):
         parts = xml.findtext('./{eregs}subject').split(' ')
         return parent.add_child(
-            'sec', xml.attrib['sectionNum'], number=' '.join(parts[:2]),
+            'sec', xml.attrib['sectionNum'],
+            marker=' '.join(parts[:2]),
             title=' '.join(parts[2:])
         )
 
     @staticmethod
     def appendix(parent, xml):
-        number, title = xml.findtext('./{eregs}appendixTitle').split('—', 1)
+        marker, title = xml.findtext('./{eregs}appendixTitle').split('—', 1)
         return parent.add_child(
-            'app', xml.attrib['appendixLetter'], number=number, title=title
+            'app', xml.attrib['appendixLetter'], marker=marker, title=title
         )
 
     @staticmethod
     def appendixSection(parent, xml):
         parts = xml.findtext('./{eregs}subject').split('—', 1)
         if len(parts) == 1:
-            number, title = parts[0].split(' ', 1)
+            marker, title = parts[0].split(' ', 1)
         else:
-            number, title = parts
+            marker, title = parts
         return parent.add_child(
-            'appsec', xml.attrib['appendixSecNum'], number=number, title=title
+            'appsec', xml.attrib['appendixSecNum'], marker=marker, title=title
         )
 
     @staticmethod
@@ -50,7 +55,7 @@ class RegMLParser:
         text = ''.join(xml.find('./{eregs}content').itertext()).strip()
         if marker:
             category = 'lvl{0}'.format(len(label_parts) - 2)
-            return parent.add_child(category, label_parts[-1], number=marker,
+            return parent.add_child(category, label_parts[-1], marker=marker,
                                     text=text)
         else:
             return parent.add_child('par', text=text,
@@ -66,6 +71,48 @@ def add_child(parent, xml):
         add_child(parent, xml_child)
 
 
+def get_or_create_work(xml):
+    cfr_title = xml.findtext('.//{eregs}cfr/{eregs}title')
+    cfr_part = xml.findtext('.//{eregs}cfr/{eregs}section')
+
+    work, _ = Work.objects.get_or_create(
+        doc_type='cfr',
+        doc_subtype='title_{0}'.format(cfr_title),
+        work_id='part_{0}'.format(cfr_part),
+    )
+    return work
+
+
+def replace_or_create_entity(xml, work):
+    entity_id = xml.findtext('.//{eregs}documentNumber')
+    entity_date = datetime.strptime(
+        xml.findtext('.//{eregs}effectiveDate'), '%Y-%m-%d').date()
+    Entity.objects.filter(work=work, entity_id=entity_id).delete()
+    return Entity.objects.create(
+        work=work, entity_id=entity_id, date=entity_date)
+
+
+def parse_structure(part_xml, entity):
+    cfr_part = part_xml.attrib['label']
+    letter = part_xml.findtext('..//{eregs}regLetter')
+    if letter:
+        marker = 'Regulation {0} ({1})'.format(letter, cfr_part)
+    else:
+        marker = 'Regulation {0}'.format(cfr_part)
+    root = new_tree(
+        tag='part', tag_number=part_xml.attrib['label'], marker=marker,
+        title=part_xml.findtext('..//{eregs}fdsys/{eregs}title')
+    )
+    for xml_child in part_xml:
+        add_child(root, xml_child)
+    root.renumber()
+    for node in root.walk():
+        node.struct.entity = entity
+    DocStruct.objects.bulk_create(node.struct for node in root.walk())
+
+    return root
+
+
 class Command(BaseCommand):
     help = ''
 
@@ -75,31 +122,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         xml = etree.parse(options['input_file'])
 
-        cfr_title = xml.findtext('.//{eregs}cfr/{eregs}title')
-        cfr_part = xml.findtext('.//{eregs}cfr/{eregs}section')
-        work_id = '{0} CFR {1}'.format(cfr_title, cfr_part)
-        entity_id = xml.findtext('.//{eregs}documentNumber')
-        entity_date = datetime.strptime(
-            xml.findtext('.//{eregs}effectiveDate'), '%Y-%m-%d').date()
+        work = get_or_create_work(xml)
+        entity = replace_or_create_entity(xml, work)
 
-        work, _ = Work.objects.get_or_create(identifier=work_id)
-        Entity.objects.filter(work=work, identifier=entity_id).delete()
-        entity = Entity.objects.create(
-            work=work, identifier=entity_id, date=entity_date)
+        root = parse_structure(xml.find('.//{eregs}part'), entity)
 
-        # first build a tree structure, keeping the original XML
-        part_xml = xml.find('.//{eregs}part')
-        root = new_tree(
-            'part_{0}'.format(cfr_part), entity=entity, category='part',
-            number='Regulation ' + xml.findtext('.//{eregs}regLetter'),
-            title=xml.findtext('.//{eregs}fdsys/{eregs}title')
-        )
-        for xml_child in part_xml:
-            add_child(root, xml_child)
-        root.renumber()
-        for node in root.walk():
-            node.struct.entity = entity
-        DocStruct.objects.bulk_create(node.struct for node in root.walk())
-
-        for struct in DocStruct.objects.order_by('left'):
-            print(struct.identifier)
+        logger.info('Created %s DocStructs for %s/%s/%s/@%s',
+                    root.subtree_size(), work.doc_type, work.doc_subtype,
+                    work.work_id, entity.entity_id)

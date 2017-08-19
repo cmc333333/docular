@@ -4,26 +4,42 @@ from docular.structure.models import DocStruct
 from docular.structure.network import Cursor
 
 
-def serialize(cursor, root=False):
+def json_serialize(cursor, root=False):
     as_dict = {
         'identifier': cursor.struct.identifier,
-        'category': cursor.struct.category,
+        'tag': cursor.struct.tag,
+        'tag_number': cursor.struct.tag_number,
+        'marker': cursor.struct.marker,
         'title': cursor.struct.title,
-        'number': cursor.struct.number,
         'text': cursor.struct.text,
-        'children': [serialize(child) for child in cursor.children()],
+        'children': [json_serialize(child) for child in cursor.children()],
     }
     if root:
-        as_dict['entity'] = {'work': cursor.struct.entity.work_id,
-                             'entity': cursor.struct.entity.identifier}
+        as_dict['frbr'] = {
+            'work': {
+                'doc_type': cursor.struct.entity.work.doc_type,
+                'doc_subtype': cursor.struct.entity.work.doc_subtype,
+                'work_id': cursor.struct.entity.work.work_id,
+            },
+            'entity': {
+                'entity_id': cursor.struct.entity.entity_id,
+                'date': cursor.struct.entity.date,
+            },
+        }
     return as_dict
 
 
-def get(request, work, version, identifier):
-    root_struct = DocStruct.objects.get(identifier=identifier,
-                                        entity__identifier=version,
-                                        entity__work__identifier=work)
+def get(request, doc_type, doc_subtype, work_id, entity_id, label, fmt):
+    root_struct = DocStruct.objects.get(
+        entity__work__doc_type=doc_type,
+        entity__work__doc_subtype=doc_subtype,
+        entity__work__work_id=work_id,
+        entity__entity_id=entity_id,
+        identifier=label
+    )
 
     root = Cursor.load(
-        root_struct, DocStruct.objects.select_related('entity'))
-    return JsonResponse(serialize(root, True))
+        root_struct,
+        DocStruct.objects.select_related('entity', 'entity__work')
+    )
+    return JsonResponse(json_serialize(root, True))
