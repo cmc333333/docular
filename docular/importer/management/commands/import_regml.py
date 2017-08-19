@@ -1,78 +1,69 @@
 import argparse
-import logging
-import re
 from datetime import datetime
 from lxml import etree
 
 from django.core.management.base import BaseCommand
 
 from docular.structure.models import DocStruct, Entity, Work
-from docular.structure.network import Cursor
-
-logger = logging.getLogger(__name__)
+from docular.structure.network import new_tree
 
 
-def add_children(xml, parent_cursor):
-    for xml_child in xml:
-        cursor = parent_cursor
-        tag = xml_child.tag.replace('{eregs}', '')
-        if tag == 'subpart':
-            cursor = cursor.add_child(xml_child, 'subpart',
-                                      xml_child.attrib['subpartLetter'])
-        elif tag == 'section':
-            cursor = cursor.add_child(xml_child, 'sec',
-                                      xml_child.attrib['sectionNum'])
-        elif tag == 'appendix':
-            cursor = cursor.add_child(xml_child, 'app',
-                                      xml_child.attrib['appendixLetter'])
-        elif tag == 'appendixSection':
-            cursor = cursor.add_child(xml_child, 'appsec',
-                                      xml_child.attrib['appendixSecNum'])
-        elif tag == 'paragraph':
-            label_parts = xml_child.attrib['label'].split('-')
-            last = label_parts[-1]
-            if re.match('p\d+', last):
-                cursor = cursor.add_child(xml_child, 'par')
-            else:
-                child_type = 'lvl{0}'.format(len(label_parts) - 2)
-                cursor = cursor.add_child(xml_child, child_type, last)
-        add_children(xml_child, cursor)
-
-
-def generate_structs(entity: Entity, root: Cursor):
-    for node in root.walk():
-        text = ''
-        if node.category == 'part':
-            number = 'Regulation ' + node.obj.findtext('..//{eregs}regLetter')
-            title = node.obj.findtext('..//{eregs}fdsys/{eregs}title')
-        elif node.category == 'subpart':
-            number = 'Subpart ' + node.obj.attrib['subpartLetter']
-            title = node.obj.findtext('./{eregs}title')
-        elif node.category == 'sect':
-            parts = node.obj.findtext('./{eregs}subject').split(' ')
-            number = ' '.join(parts[:2])
-            title = ' '.join(parts[2:])
-        elif node.category == 'app':
-            number, title = node.obj.findtext('./{eregs}appendixTitle').split(
-                '—', 1)
-        elif node.category == 'appsec':
-            parts = node.obj.findtext('./{eregs}subject').split('—', 1)
-            if len(parts) == 1:
-                number, title = parts[0].split(' ', 1)
-            else:
-                number, title = parts
-        elif node.category == 'par':
-            number = ''
-            title = node.obj.findtext('./title') or ''
-        elif node.category.startswith('lvl'):
-            number = node.obj.attrib['marker']
-            title = node.obj.findtext('./title') or ''
-
-        yield DocStruct(
-            entity=entity, category=node.category, identifier=node._key,
-            left=node.left, right=node.right,
-            number=number, title=title, text=text
+class RegMLParser:
+    @staticmethod
+    def subpart(parent, xml):
+        letter = xml.attrib['subpartLetter']
+        return parent.add_child(
+            'subpart', letter, number='Subpart ' + letter,
+            title=xml.findtext('./{eregs}title')
         )
+
+    @staticmethod
+    def section(parent, xml):
+        parts = xml.findtext('./{eregs}subject').split(' ')
+        return parent.add_child(
+            'sec', xml.attrib['sectionNum'], number=' '.join(parts[:2]),
+            title=' '.join(parts[2:])
+        )
+
+    @staticmethod
+    def appendix(parent, xml):
+        number, title = xml.findtext('./{eregs}appendixTitle').split('—', 1)
+        return parent.add_child(
+            'app', xml.attrib['appendixLetter'], number=number, title=title
+        )
+
+    @staticmethod
+    def appendixSection(parent, xml):
+        parts = xml.findtext('./{eregs}subject').split('—', 1)
+        if len(parts) == 1:
+            number, title = parts[0].split(' ', 1)
+        else:
+            number, title = parts
+        return parent.add_child(
+            'appsec', xml.attrib['appendixSecNum'], number=number, title=title
+        )
+
+    @staticmethod
+    def paragraph(parent, xml):
+        label_parts = xml.attrib['label'].split('-')
+        marker = xml.attrib.get('marker')
+        text = ''.join(xml.find('./{eregs}content').itertext()).strip()
+        if marker:
+            category = 'lvl{0}'.format(len(label_parts) - 2)
+            return parent.add_child(category, label_parts[-1], number=marker,
+                                    text=text)
+        else:
+            return parent.add_child('par', text=text,
+                                    title=xml.findtext('./title') or '')
+
+
+def add_child(parent, xml):
+    tag = xml.tag.replace('{eregs}', '')
+    if hasattr(RegMLParser, tag):
+        parent = getattr(RegMLParser, tag)(parent, xml)
+        parent.extra['xml'] = xml
+    for xml_child in xml:
+        add_child(parent, xml_child)
 
 
 class Command(BaseCommand):
@@ -98,10 +89,17 @@ class Command(BaseCommand):
 
         # first build a tree structure, keeping the original XML
         part_xml = xml.find('.//{eregs}part')
-        cursor = Cursor.new_tree(part_xml, 'part_{0}'.format(cfr_part))
-        add_children(part_xml, cursor)
-        cursor.renumber(1)
-        DocStruct.objects.bulk_create(generate_structs(entity, cursor))
+        root = new_tree(
+            'part_{0}'.format(cfr_part), entity=entity, category='part',
+            number='Regulation ' + xml.findtext('.//{eregs}regLetter'),
+            title=xml.findtext('.//{eregs}fdsys/{eregs}title')
+        )
+        for xml_child in part_xml:
+            add_child(root, xml_child)
+        root.renumber()
+        for node in root.walk():
+            node.struct.entity = entity
+        DocStruct.objects.bulk_create(node.struct for node in root.walk())
 
         for struct in DocStruct.objects.order_by('left'):
             print(struct.identifier)

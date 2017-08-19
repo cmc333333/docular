@@ -4,24 +4,26 @@ from docular.structure.models import DocStruct
 from docular.structure.network import Cursor
 
 
-def serializer(doc):
-    return {
-        'entity': '{0}@{1}'.format(doc.entity.work_id, doc.entity.identifier),
-        'category': doc.category,
-        'identifier': doc.identifier,
-        'text': doc.text,
-        'number': doc.number,
-        'title': doc.title,
+def serialize(cursor, root=False):
+    as_dict = {
+        'identifier': cursor.struct.identifier,
+        'category': cursor.struct.category,
+        'title': cursor.struct.title,
+        'number': cursor.struct.number,
+        'text': cursor.struct.text,
+        'children': [serialize(child) for child in cursor.children()],
     }
+    if root:
+        as_dict['entity'] = {'work': cursor.struct.entity.work_id,
+                             'entity': cursor.struct.entity.identifier}
+    return as_dict
 
 
 def get(request, work, version, identifier):
-    root = DocStruct.objects.get(identifier=identifier,
-                                 entity__identifier=version,
-                                 entity__work__identifier=work)
-    docs = DocStruct.objects.filter(
-        left__gte=root.left, right__lte=root.right, entity=root.entity
-    ).order_by('left')
+    root_struct = DocStruct.objects.get(identifier=identifier,
+                                        entity__identifier=version,
+                                        entity__work__identifier=work)
 
-    cursor = Cursor.from_nested_set(docs)
-    return JsonResponse(cursor.dump(serializer))
+    root = Cursor.load(
+        root_struct, DocStruct.objects.select_related('entity'))
+    return JsonResponse(serialize(root, True))
