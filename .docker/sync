@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+if [ -n "$DEBUG" ]; then
+  pip-sync requirements_dev.txt
+else
+  pip-sync requirements.txt
+fi

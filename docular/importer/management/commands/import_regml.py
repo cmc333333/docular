@@ -1,14 +1,39 @@
 import argparse
 import logging
 from datetime import datetime
-from lxml import etree
 
 from django.core.management.base import BaseCommand
+from lxml import etree
 
-from docular.structure.models import DocStruct, Entity, Work
+from docular.layer.models import Layer, Span
+from docular.structure.models import Expression, Work
 from docular.structure.network import new_tree
 
 logger = logging.getLogger(__name__)
+
+
+class InlineProcessor:
+    def __call__(self, root_xml):
+        self.text = ''
+        self.spans = []
+        self.root_xml = root_xml
+
+        self.recurse(root_xml)
+
+        return self.text, self.spans
+
+    def recurse(self, xml):
+        start = len(self.text)
+        self.text += xml.text or ''
+        for child in xml:
+            self.recurse(child)
+            self.text += child.tail or ''
+        end = len(self.text)
+
+        if xml.tag == '{eregs}def':
+            layer = Layer.objects.create(
+                category='define', attributes={'term': self.text[start:end]})
+            self.spans.append(Span(layer=layer, start=start, end=end))
 
 
 class RegMLParser:
@@ -38,7 +63,7 @@ class RegMLParser:
         )
 
     @staticmethod
-    def appendixSection(parent, xml):
+    def appendixSection(parent, xml):   # noqa
         parts = xml.findtext('./{eregs}subject').split('—', 1)
         if len(parts) == 1:
             marker, title = parts[0].split(' ', 1)
@@ -52,14 +77,16 @@ class RegMLParser:
     def paragraph(parent, xml):
         label_parts = xml.attrib['label'].split('-')
         marker = xml.attrib.get('marker')
-        text = ''.join(xml.find('./{eregs}content').itertext()).strip()
+        title = xml.findtext('./{eregs}title') or ''
+        text, spans = InlineProcessor()(xml.find('./{eregs}content'))
         if marker:
             category = 'lvl{0}'.format(len(label_parts) - 2)
-            return parent.add_child(category, label_parts[-1], marker=marker,
-                                    text=text)
+            node = parent.add_child(category, label_parts[-1], marker=marker,
+                                    text=text, title=title)
         else:
-            return parent.add_child('par', text=text,
-                                    title=xml.findtext('./title') or '')
+            node = parent.add_child('par', text=text, title=title)
+        node.extra['spans'] = spans
+        return node
 
 
 def add_child(parent, xml):
@@ -83,16 +110,17 @@ def get_or_create_work(xml):
     return work
 
 
-def replace_or_create_entity(xml, work):
-    entity_id = xml.findtext('.//{eregs}documentNumber')
-    entity_date = datetime.strptime(
+def replace_or_create_expression(xml, work):
+    expression_id = xml.findtext('.//{eregs}documentNumber')
+    expression_date = datetime.strptime(
         xml.findtext('.//{eregs}effectiveDate'), '%Y-%m-%d').date()
-    Entity.objects.filter(work=work, entity_id=entity_id).delete()
-    return Entity.objects.create(
-        work=work, entity_id=entity_id, date=entity_date)
+    Expression.objects.filter(work=work, expression_id=expression_id).delete()
+    return Expression.objects.create(
+        work=work, expression_id=expression_id, date=expression_date,
+        author='cfpb')
 
 
-def parse_structure(part_xml, entity):
+def parse_structure(part_xml, expression):
     cfr_part = part_xml.attrib['label']
     letter = part_xml.findtext('..//{eregs}regLetter')
     if letter:
@@ -103,18 +131,23 @@ def parse_structure(part_xml, entity):
         tag='part', tag_number=part_xml.attrib['label'], marker=marker,
         title=part_xml.findtext('..//{eregs}fdsys/{eregs}title')
     )
+    root.extra['xml'] = part_xml
     for xml_child in part_xml:
         add_child(root, xml_child)
     root.renumber()
     for node in root.walk():
-        node.struct.entity = entity
-    DocStruct.objects.bulk_create(node.struct for node in root.walk())
+        node.struct.expression = expression
+        node.struct.save()
+
+        for span in node.extra.get('spans', []):
+            span.doc_struct = node.struct
+            span.save()
 
     return root
 
 
 class Command(BaseCommand):
-    help = ''
+    help = ''   # noqa
 
     def add_arguments(self, parser):
         parser.add_argument('input_file', type=argparse.FileType('rb'))
@@ -123,10 +156,10 @@ class Command(BaseCommand):
         xml = etree.parse(options['input_file'])
 
         work = get_or_create_work(xml)
-        entity = replace_or_create_entity(xml, work)
+        expression = replace_or_create_expression(xml, work)
 
-        root = parse_structure(xml.find('.//{eregs}part'), entity)
+        root = parse_structure(xml.find('.//{eregs}part'), expression)
 
         logger.info('Created %s DocStructs for %s/%s/%s/@%s',
                     root.subtree_size(), work.doc_type, work.doc_subtype,
-                    work.work_id, entity.entity_id)
+                    work.work_id, expression.expression_id)

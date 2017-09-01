@@ -14,21 +14,24 @@ class Work(models.Model):
         )
 
 
-class Entity(models.Model):
+class Expression(models.Model):
     work = models.ForeignKey(Work, on_delete=models.CASCADE)
-    entity_id = models.CharField(max_length=32)
+    expression_id = models.CharField(max_length=32)
     date = models.DateField()
+    author = models.CharField(max_length=32)
 
     class Meta:
-        unique_together = ('work', 'entity_id')
+        unique_together = ('work', 'expression_id', 'author')
         index_together = (
             unique_together,
+            ('work', 'expression_id'),
+            ('work', 'date', 'author'),
             ('work', 'date'),
         )
 
 
 class DocStruct(models.Model):
-    entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
+    expression = models.ForeignKey(Expression, on_delete=models.CASCADE)
     identifier = models.CharField(max_length=1024)
     tag = models.CharField(max_length=64)
     tag_number = models.CharField(max_length=16)
@@ -38,11 +41,15 @@ class DocStruct(models.Model):
 
     left = models.PositiveIntegerField()
     right = models.PositiveIntegerField()
+    depth = models.PositiveIntegerField()
 
     class Meta:
-        unique_together = ('entity', 'identifier')
+        unique_together = ('expression', 'identifier')
         index_together = (
             unique_together,
-            ('entity', 'left'),
-            ('entity', 'tag'),
+            ('expression', 'left'),
+            ('expression', 'left', 'depth'),
+            ('expression', 'right'),
+            ('expression', 'right', 'depth'),
+            ('expression', 'tag'),
         )

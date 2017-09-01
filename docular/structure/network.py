@@ -33,7 +33,9 @@ class Cursor:
             tag_number = str(order + 1)
         identifier = '{0}__{1}_{2}'.format(self._idx, tag, tag_number)
         self._tree.add_node(identifier, struct=DocStruct(
-            identifier=identifier, tag=tag, tag_number=tag_number, **attrs))
+            identifier=identifier, tag=tag, tag_number=tag_number,
+            depth=self.struct.depth + 1, **attrs
+        ))
         self._tree.add_edge(self._idx, identifier, order=order)
         return self.__class__(self._tree, identifier)
 
@@ -48,6 +50,10 @@ class Cursor:
     @property
     def parent(self):
         return next(self.ancestors())
+
+    @property
+    def root(self):
+        return self.__class__(self._tree, self._idx.split('__', 1)[0])
 
     def children(self):
         edges = [(order, idx) for _, idx, order
@@ -73,7 +79,7 @@ class Cursor:
             queryset = DocStruct.objects
         child_structs = queryset.filter(
             left__gt=root_struct.left, right__lt=root_struct.right,
-            entity=root_struct.entity
+            expression=root_struct.expression
         ).order_by('left')
 
         graph = nx.DiGraph()
@@ -95,6 +101,7 @@ def new_tree(tag, tag_number, **attrs):
     graph = nx.DiGraph()
     identifier = '{0}_{1}'.format(tag, tag_number)
     graph.add_node(identifier, struct=DocStruct(
-        identifier=identifier, tag=tag, tag_number=tag_number, **attrs
+        identifier=identifier, tag=tag, tag_number=tag_number, depth=0,
+        **attrs
     ))
     return Cursor(graph, identifier)

@@ -13,20 +13,51 @@ def json_serialize(cursor, root=False):
         'marker': cursor.struct.marker,
         'title': cursor.struct.title,
         'text': cursor.struct.text,
+        'depth': cursor.struct.depth,
         'children': [json_serialize(child) for child in cursor.children()],
     }
     if root:
         as_dict['frbr'] = {
             'work': {
-                'doc_type': cursor.struct.entity.work.doc_type,
-                'doc_subtype': cursor.struct.entity.work.doc_subtype,
-                'work_id': cursor.struct.entity.work.work_id,
+                'doc_type': cursor.struct.expression.work.doc_type,
+                'doc_subtype': cursor.struct.expression.work.doc_subtype,
+                'work_id': cursor.struct.expression.work.work_id,
             },
-            'entity': {
-                'entity_id': cursor.struct.entity.entity_id,
-                'date': cursor.struct.entity.date,
+            'expression': {
+                'expression_id': cursor.struct.expression.expression_id,
+                'date': cursor.struct.expression.date,
+                'author': cursor.struct.expression.author,
             },
         }
+        prev = DocStruct.objects.filter(
+            expression=cursor.struct.expression, right=cursor.struct.left - 1
+        ).first()
+        following = DocStruct.objects.filter(
+            expression=cursor.struct.expression, left=cursor.struct.right + 1
+        ).first()
+        up = DocStruct.objects.filter(
+            expression=cursor.struct.expression, depth=cursor.struct.depth - 1,
+            left__lt=cursor.struct.left, right__gt=cursor.struct.right
+        ).first()
+        as_dict['nav'] = {}
+        if prev:
+            as_dict['nav']['prev'] = {
+                'identifier': prev.identifier,
+                'marker': prev.marker,
+                'title': prev.title,
+            }
+        if following:
+            as_dict['nav']['next'] = {
+                'identifier': following.identifier,
+                'marker': following.marker,
+                'title': following.title,
+            }
+        if up:
+            as_dict['nav']['up'] = {
+                'identifier': up.identifier,
+                'marker': up.marker,
+                'title': up.title,
+            }
     return as_dict
 
 
@@ -35,12 +66,12 @@ def xml_serialize(cursor, root=False):
     if root:
         frbr = etree.SubElement(elt, 'frbr')
         etree.SubElement(frbr, 'FRBRWork',
-                         doc_type=cursor.struct.entity.work.doc_type,
-                         doc_subtype=cursor.struct.entity.work.doc_subtype,
-                         work_id=cursor.struct.entity.work.work_id)
+                         doc_type=cursor.struct.expression.work.doc_type,
+                         doc_subtype=cursor.struct.expression.work.doc_subtype,
+                         work_id=cursor.struct.expression.work.work_id)
         etree.SubElement(frbr, 'FRBRExpression',
-                         entity_id=cursor.struct.entity.entity_id,
-                         date=cursor.struct.entity.date.isoformat())
+                         expression_id=cursor.struct.expression.expression_id,
+                         date=cursor.struct.expression.date.isoformat())
     if cursor.struct.marker:
         etree.SubElement(elt, 'num').text = cursor.struct.marker
     if cursor.struct.title:
@@ -52,18 +83,20 @@ def xml_serialize(cursor, root=False):
     return elt
 
 
-def get(request, doc_type, doc_subtype, work_id, entity_id, label, fmt):
+def get(request, doc_type, doc_subtype, work_id, expression_id, author, label,
+        fmt):
     root_struct = DocStruct.objects.get(
-        entity__work__doc_type=doc_type,
-        entity__work__doc_subtype=doc_subtype,
-        entity__work__work_id=work_id,
-        entity__entity_id=entity_id,
+        expression__work__doc_type=doc_type,
+        expression__work__doc_subtype=doc_subtype,
+        expression__work__work_id=work_id,
+        expression__expression_id=expression_id,
+        expression__author=author,
         identifier=label
     )
 
     root = Cursor.load(
         root_struct,
-        DocStruct.objects.select_related('entity', 'entity__work')
+        DocStruct.objects.select_related('expression', 'expression__work')
     )
     if fmt == 'xml':
         elt = xml_serialize(root, True)

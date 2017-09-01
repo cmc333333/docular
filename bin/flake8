@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e
+
+docker-compose run --rm --no-deps api setup_python_then flake8 "$@"
