@@ -1,10 +1,9 @@
-import qs from 'querystring';
-
 import axios from 'axios';
-import Link from 'next/link';
 import PropTypes from 'prop-types';
 import React from 'react';
 import hash from 'string-hash';
+
+import { Link } from '../routes';
 
 const client = axios.create({ baseURL: process.env.API_BASE });
 
@@ -23,7 +22,6 @@ function color({ min, max, name }) {
 
 function Struct({ nav, struct }) {
   let header;
-  let markerLink;
   const style = {
     backgroundColor: color({ min: 192, name: struct.tag }),
     border: `1px solid ${color({ min: 64, max: 128, name: struct.tag })}`,
@@ -36,13 +34,7 @@ function Struct({ nav, struct }) {
     verticalAlign: 'top',
     width: '10%',
   };
-  const queryStr = qs.stringify(
-    Object.assign({}, nav, { label: struct.identifier }));
-  if (struct.marker) {
-    markerLink = <Link href={`/view?${queryStr}`}>{struct.marker}</Link>;
-  } else {
-    markerLink = <Link href={`/view?${queryStr}`}>_</Link>;
-  }
+  const markerQuery = Object.assign({}, nav, { label: struct.identifier });
   if (struct.title) {
     const HTag = `h${struct.depth + 1}`;
     header = <HTag style={{ margin: 0 }}>{struct.title}</HTag>;
@@ -51,7 +43,11 @@ function Struct({ nav, struct }) {
 
   return (
     <div style={style}>
-      <div style={markerStyle}>{markerLink}</div>
+      <div style={markerStyle}>
+        <Link route="view" params={markerQuery}>
+          <a>{struct.marker || '_'}</a>
+        </Link>
+      </div>
       <div style={{ display: 'inline-block', width: '90%' }}>
         { header }
         { struct.text }
@@ -73,7 +69,6 @@ export default function View({ struct }) {
   let next;
   let up;
   let query;
-  let href;
   const nav = {
     docType: struct.frbr.work.doc_type,
     docSubtype: struct.frbr.work.doc_subtype,
@@ -83,10 +78,9 @@ export default function View({ struct }) {
   };
   if (struct.nav.prev) {
     query = Object.assign({}, nav, { label: struct.nav.prev.identifier });
-    href = `/view?${qs.stringify(query)}`;
     prev = (
       <div style={{ display: 'inline-block', width: '49%' }}>
-        <Link href={href}><a style={{ float: 'left' }}>
+        <Link route="view" params={query}><a style={{ float: 'left' }}>
           &lt; { struct.nav.prev.marker } { struct.nav.prev.title }
         </a></Link>
       </div>
@@ -94,10 +88,9 @@ export default function View({ struct }) {
   }
   if (struct.nav.up) {
     query = Object.assign({}, nav, { label: struct.nav.up.identifier });
-    href = `/view?${qs.stringify(query)}`;
     up = (
       <div style={{ textAlign: 'center' }}>
-        <Link href={href}><a>
+        <Link route="view" params={query}><a>
           ^ { struct.nav.up.marker } { struct.nav.up.title } ^
         </a></Link>
       </div>
@@ -105,10 +98,9 @@ export default function View({ struct }) {
   }
   if (struct.nav.next) {
     query = Object.assign({}, nav, { label: struct.nav.next.identifier });
-    href = `/view?${qs.stringify(query)}`;
     next = (
       <div style={{ display: 'inline-block', textAlign: 'right', width: '50%' }}>
-        <Link href={href}><a>
+        <Link route="view" params={query}><a>
           { struct.nav.next.marker } { struct.nav.next.title } &gt;
         </a></Link>
       </div>
