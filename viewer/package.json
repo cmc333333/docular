@@ -1,0 +1,35 @@
+{
+  "name": "docular-viewer",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node server.js",
+    "lint": "eslint",
+    "start": "next build && node server.js",
+    "test": "jest"
+  },
+  "author": "CM Lubinski",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "express": "^4.15.4",
+    "next": "^3.0.6",
+    "prop-types": "^15.5.10",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "string-hash": "^1.1.3"
+  },
+  "devDependencies": {
+    "eslint": "^4.5.0",
+    "eslint-config-airbnb": "^15.1.0",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-jest": "^19.0.1",
+    "eslint-plugin-jsx-a11y": "^5.1.1",
+    "eslint-plugin-react": "^7.3.0",
+    "jest": "^20.0.4"
+  },
+  "engines": {
+    "node": "6.x"
+  }
+}

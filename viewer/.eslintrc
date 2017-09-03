@@ -1,0 +1,16 @@
+{
+  "env": {
+    "jest/globals": true,
+  },
+  "extends": ["airbnb", "plugin:jest/recommended"],
+  "globals": {
+    "document": true,
+    "window": true
+  },
+  "plugins": [
+    "jest"
+  ],
+  "rules": {
+    "react/jsx-filename-extension": [1, {"extensions": [".js", ".jsx"]} ]
+  }
+}
