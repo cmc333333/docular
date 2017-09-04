@@ -5,7 +5,7 @@ import hash from 'string-hash';
 
 import { Link } from '../routes';
 
-const client = axios.create({ baseURL: process.env.API_BASE });
+const client = axios.create({ baseURL: `${process.env.API_BASE}akn/us` });
 
 function color({ min, max, name }) {
   const nameHash = hash(name);
@@ -70,38 +70,39 @@ export default function View({ struct }) {
   let up;
   let query;
   const nav = {
-    docType: struct.frbr.work.doc_type,
-    docSubtype: struct.frbr.work.doc_subtype,
-    workId: struct.frbr.work.work_id,
-    expressionId: struct.frbr.expression.expression_id,
-    author: struct.frbr.expression.author,
+    docType: struct.meta.frbr.work.doc_type,
+    docSubtype: struct.meta.frbr.work.doc_subtype,
+    workId: struct.meta.frbr.work.work_id,
+    expressionId: struct.meta.frbr.expression.expression_id,
+    author: struct.meta.frbr.expression.author,
   };
-  if (struct.nav.prev) {
-    query = Object.assign({}, nav, { label: struct.nav.prev.identifier });
+  if (struct.meta.prev_doc) {
+    query = Object.assign({}, nav, { label: struct.meta.prev_doc.identifier });
     prev = (
       <div style={{ display: 'inline-block', width: '49%' }}>
         <Link route="view" params={query}><a style={{ float: 'left' }}>
-          &lt; { struct.nav.prev.marker } { struct.nav.prev.title }
+          &lt; { struct.meta.prev_doc.marker } { struct.meta.prev_doc.title }
         </a></Link>
       </div>
     );
   }
-  if (struct.nav.up) {
-    query = Object.assign({}, nav, { label: struct.nav.up.identifier });
+  if (struct.meta.parent_doc) {
+    query = Object.assign(
+      {}, nav, { label: struct.meta.parent_doc.identifier });
     up = (
       <div style={{ textAlign: 'center' }}>
         <Link route="view" params={query}><a>
-          ^ { struct.nav.up.marker } { struct.nav.up.title } ^
+          ^ { struct.meta.parent_doc.marker } { struct.meta.parent_doc.title } ^
         </a></Link>
       </div>
     );
   }
-  if (struct.nav.next) {
-    query = Object.assign({}, nav, { label: struct.nav.next.identifier });
+  if (struct.meta.next_doc) {
+    query = Object.assign({}, nav, { label: struct.meta.next_doc.identifier });
     next = (
       <div style={{ display: 'inline-block', textAlign: 'right', width: '50%' }}>
         <Link route="view" params={query}><a>
-          { struct.nav.next.marker } { struct.nav.next.title } &gt;
+          { struct.meta.next_doc.marker } { struct.meta.next_doc.title } &gt;
         </a></Link>
       </div>
     );
