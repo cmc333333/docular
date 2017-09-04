@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 
 from docular.structure.routes import router
-from docular.structure.views import nested_detail
+from docular.structure.views import NestedDetail
 
 
 def match(name):
@@ -17,6 +17,6 @@ urlpatterns = [
         '/@' + match('expression_id') +     # 2011-31725
         '/' + match('author') +             # ecfr
         '/~' + match('label'),              # part_1005__subpart_A
-        nested_detail),
+        NestedDetail.as_view()),
     url('^', include(router.urls)),
 ]

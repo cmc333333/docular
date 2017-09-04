@@ -1,15 +1,16 @@
-from drf_tweaks import serializers
+from drf_tweaks.serializers import ModelSerializer
+from rest_framework import serializers
 
 from docular.structure.models import DocStruct, Expression, Work
 
 
-class WorkSerializer(serializers.ModelSerializer):
+class WorkSerializer(ModelSerializer):
     class Meta:
         model = Work
         fields = ('doc_type', 'doc_subtype', 'work_id')
 
 
-class ExpressionSerializer(serializers.ModelSerializer):
+class ExpressionSerializer(ModelSerializer):
     work = WorkSerializer(read_only=True)
 
     class Meta:
@@ -17,7 +18,7 @@ class ExpressionSerializer(serializers.ModelSerializer):
         fields = ('work', 'expression_id', 'date', 'author')
 
 
-class FlatDocStructSerializer(serializers.ModelSerializer):
+class FlatDocStructSerializer(ModelSerializer):
     expression = ExpressionSerializer(read_only=True)
 
     class Meta:
@@ -26,61 +27,66 @@ class FlatDocStructSerializer(serializers.ModelSerializer):
                   'text', 'depth', 'expression')
 
 
-class NavSerializer(serializers.ModelSerializer):
+class NavSerializer(ModelSerializer):
     class Meta:
         model = DocStruct
         fields = ('identifier', 'marker', 'title')
 
 
-class CursorSerializer(serializers.ModelSerializer):
+class CursorSerializer(ModelSerializer):
+    children = serializers.SerializerMethodField()
+    meta = serializers.SerializerMethodField()
+
     class Meta:
         model = DocStruct
         fields = ('identifier', 'tag', 'tag_number', 'marker', 'title',
-                  'text', 'depth')
+                  'text', 'depth', 'children', 'meta')
 
     def to_representation(self, instance):
-        rep = super().to_representation(instance.struct)
-        rep['children'] = CursorSerializer(many=True).to_representation(
-            instance.children())
-        rep['meta'] = {}
-        return rep
+        struct = instance.struct
+        struct.cursor = instance
+        return super().to_representation(struct)
+
+    def get_children(self, instance):
+        return self.__class__(instance.cursor.children(), many=True).data
+
+    def get_meta(self, instance):
+        return {}
 
 
 class RootSerializer(CursorSerializer):
     def prev_doc(self, instance):
         prev = DocStruct.objects.filter(
-            expression=instance.struct.expression,
-            right=instance.struct.left - 1
+            expression=instance.expression, right=instance.left - 1
         ).first()
         if prev:
             return NavSerializer(prev).data
 
     def next_doc(self, instance):
         following = DocStruct.objects.filter(
-            expression=instance.struct.expression,
-            left=instance.struct.right + 1
+            expression=instance.expression, left=instance.right + 1
         ).first()
         if following:
             return NavSerializer(following).data
 
     def parent_doc(self, instance):
         up = DocStruct.objects.filter(
-            expression=instance.struct.expression,
-            depth=instance.struct.depth - 1,
-            left__lt=instance.struct.left, right__gt=instance.struct.right
+            expression=instance.expression, depth=instance.depth - 1,
+            left__lt=instance.left, right__gt=instance.right
         ).first()
         if up:
             return NavSerializer(up).data
 
-    def to_representation(self, instance):
-        rep = super().to_representation(instance)
-        expression = ExpressionSerializer().to_representation(
-            instance.struct.expression)
-        rep['meta'].update(
-            prev_doc=self.prev_doc(instance),
-            next_doc=self.next_doc(instance),
-            parent_doc=self.parent_doc(instance),
-            frbr={'work': expression.pop('work'),
-                  'expression': expression},
-        )
-        return rep
+    def get_meta(self, instance):
+        meta = super().get_meta(instance)
+        if self.context:    # Only the root gets context
+            expression = ExpressionSerializer().to_representation(
+                instance.expression)
+            meta.update(
+                prev_doc=self.prev_doc(instance),
+                next_doc=self.next_doc(instance),
+                parent_doc=self.parent_doc(instance),
+                frbr={'work': expression.pop('work'),
+                      'expression': expression},
+            )
+        return meta

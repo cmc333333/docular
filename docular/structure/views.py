@@ -1,6 +1,5 @@
 from rest_framework import viewsets
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
+from rest_framework.generics import RetrieveAPIView
 
 from docular.structure.models import DocStruct
 from docular.structure.network import Cursor
@@ -15,21 +14,20 @@ class DocStructViewSet(viewsets.ModelViewSet):
     ordering = ('expression_id', 'left')
 
 
-@api_view(['GET'])
-def nested_detail(request, doc_type, doc_subtype, work_id, expression_id,
-                  author, label):
-    root_struct = DocStruct.objects.get(
-        expression__work__doc_type=doc_type,
-        expression__work__doc_subtype=doc_subtype,
-        expression__work__work_id=work_id,
-        expression__expression_id=expression_id,
-        expression__author=author,
-        identifier=label
-    )
+class NestedDetail(RetrieveAPIView):
+    serializer_class = RootSerializer
 
-    root = Cursor.load(
-        root_struct,
-        DocStruct.objects.select_related('expression', 'expression__work')
-    )
-    serializer = RootSerializer(root)
-    return Response(serializer.data)
+    def get_object(self):
+        root_struct = DocStruct.objects.get(
+            expression__work__doc_type=self.kwargs['doc_type'],
+            expression__work__doc_subtype=self.kwargs['doc_subtype'],
+            expression__work__work_id=self.kwargs['work_id'],
+            expression__expression_id=self.kwargs['expression_id'],
+            expression__author=self.kwargs['author'],
+            identifier=self.kwargs['label']
+        )
+
+        return Cursor.load(
+            root_struct,
+            DocStruct.objects.select_related('expression', 'expression__work')
+        )
