@@ -1,6 +1,5 @@
 from django.conf.urls import include, url
 
-# from docular.layer.views import get
 from docular.structure.routes import router
 from docular.structure.views import nested_detail
 
