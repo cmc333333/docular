@@ -1,5 +1,7 @@
 django
 django-cors-headers
+djangorestframework
+drf_tweaks
 jsonfield
 lxml
 networkx

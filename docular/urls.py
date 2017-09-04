@@ -1,6 +1,8 @@
-from django.conf.urls import url
+from django.conf.urls import include, url
 
-from docular.layer.views import get
+# from docular.layer.views import get
+from docular.structure.routes import router
+from docular.structure.views import nested_detail
 
 
 def match(name):
@@ -15,7 +17,7 @@ urlpatterns = [
         '/' + match('work_id') +            # part_1005
         '/@' + match('expression_id') +     # 2011-31725
         '/' + match('author') +             # ecfr
-        '/~' + match('label') +             # part_1005__subpart_A
-        r'\.' + match('fmt'),               # json
-        get),
+        '/~' + match('label'),              # part_1005__subpart_A
+        nested_detail),
+    url('^', include(router.urls)),
 ]

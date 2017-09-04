@@ -8,7 +8,10 @@ attrs==17.2.0             # via flake8-bugbear
 bandit==1.4.0
 decorator==4.1.2
 django-cors-headers==2.1.0
+django-filter==1.0.4
 django==1.11.4
+djangorestframework==3.6.4
+drf-tweaks==0.6.1
 flake8-bugbear==17.4.0
 flake8-builtins==1.0
 flake8-comprehensions==1.4.1
@@ -37,7 +40,7 @@ pytest-django==3.1.2
 pytest==3.2.1
 pytz==2017.2
 pyyaml==3.12              # via bandit
-six==1.10.0               # via bandit, flake8-tuple, stevedore
+six==1.10.0
 smmap2==2.0.3             # via gitdb2
 stevedore==1.25.0         # via bandit
 testfixtures==5.1.1       # via flake8-isort
