@@ -9,7 +9,10 @@ flake8-pep3101
 flake8-print
 flake8-string-format
 flake8-tuple
+ipython
 jedi
+model-mommy
 pep8-naming
 pytest
 pytest-django
+pytest-watch
