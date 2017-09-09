@@ -1,11 +1,25 @@
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
+from docular.layer.registry import registry
 from docular.structure.models import DocStruct
 
 
 class Layer(models.Model):
     category = models.CharField(max_length=64)
+    attributes = JSONField()
     meta_for = models.ManyToManyField(DocStruct, blank=True)
+
+    @property
+    def data(self):
+        if self.category:
+            return registry[self.category].from_dict(self.attributes or {})
+        else:
+            return None
+
+    @data.setter
+    def data(self, value):
+        self.attributes = value.serialize()
 
 
 class Span(models.Model):

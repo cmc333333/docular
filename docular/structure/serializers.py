@@ -32,6 +32,10 @@ class NavSerializer(ModelSerializer):
         model = DocStruct
         fields = ('identifier', 'marker', 'title')
 
+    @classmethod
+    def or_none(cls, instance):
+        return instance and cls(instance).data
+
 
 class CursorSerializer(ModelSerializer):
     children = serializers.SerializerMethodField()
@@ -51,42 +55,19 @@ class CursorSerializer(ModelSerializer):
         return self.__class__(instance.cursor.children(), many=True).data
 
     def get_meta(self, instance):
-        print("meta")
         return {}
 
 
 class RootSerializer(CursorSerializer):
-    def prev_doc(self, instance):
-        prev = DocStruct.objects.filter(
-            expression=instance.expression, right=instance.left - 1
-        ).first()
-        if prev:
-            return NavSerializer(prev).data
-
-    def next_doc(self, instance):
-        following = DocStruct.objects.filter(
-            expression=instance.expression, left=instance.right + 1
-        ).first()
-        if following:
-            return NavSerializer(following).data
-
-    def parent_doc(self, instance):
-        up = DocStruct.objects.filter(
-            expression=instance.expression, depth=instance.depth - 1,
-            left__lt=instance.left, right__gt=instance.right
-        ).first()
-        if up:
-            return NavSerializer(up).data
-
     def get_meta(self, instance):
         meta = super().get_meta(instance)
         if self.context:    # Only the root gets context
             expression = ExpressionSerializer().to_representation(
                 instance.expression)
             meta.update(
-                prev_doc=self.prev_doc(instance),
-                next_doc=self.next_doc(instance),
-                parent_doc=self.parent_doc(instance),
+                prev_doc=NavSerializer.or_none(instance.previous()),
+                next_doc=NavSerializer.or_none(instance.following()),
+                parent_doc=NavSerializer.or_none(instance.parent()),
                 frbr={'work': expression.pop('work'),
                       'expression': expression},
             )

@@ -36,7 +36,7 @@ class DocStruct(models.Model):
     tag = models.CharField(max_length=64)
     tag_number = models.CharField(max_length=16)
     marker = models.CharField(max_length=64, blank=True)
-    title = models.CharField(max_length=128, blank=True)
+    title = models.TextField(blank=True)
     text = models.TextField(blank=True)
 
     left = models.PositiveIntegerField()
@@ -53,3 +53,17 @@ class DocStruct(models.Model):
             ('expression', 'right', 'depth'),
             ('expression', 'tag'),
         )
+
+    def previous(self):
+        return self.__class__.objects.filter(
+            expression=self.expression, right=self.left - 1).first()
+
+    def following(self):
+        return self.__class__.objects.filter(
+            expression=self.expression, left=self.right + 1).first()
+
+    def parent(self):
+        return self.__class__.objects.filter(
+            expression=self.expression, depth=self.depth - 1,
+            left__lt=self.left, right__gt=self.right
+        ).first()

@@ -34,6 +34,17 @@ class InlineProcessor:
             layer = Layer.objects.create(
                 category='define', attributes={'term': self.text[start:end]})
             self.spans.append(Span(layer=layer, start=start, end=end))
+        elif xml.tag == '{eregs}ref' and xml.attrib['reftype'] == 'term':
+            layer = Layer.objects.create(
+                category='term', attributes={'target': xml.attrib['target']})
+            self.spans.append(Span(layer=layer, start=start, end=end))
+        elif xml.tag == '{eregs}ref' and xml.attrib['reftype'] in (
+                'internal', 'external'):
+            layer = Layer.objects.create(
+                category=xml.attrib['reftype'] + '-citation',
+                attributes={'target': xml.attrib['target']}
+            )
+            self.spans.append(Span(layer=layer, start=start, end=end))
 
 
 class RegMLParser:

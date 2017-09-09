@@ -1,7 +1,7 @@
 from collections import defaultdict
 from functools import lru_cache
 from io import StringIO
-from typing import List, NamedTuple, Optional, Set
+from typing import Any, List, NamedTuple, Optional, Set
 
 from rest_framework import serializers
 
@@ -42,18 +42,18 @@ class Events(NamedTuple):
 
 
 class InlineContent(NamedTuple):
-    layer_id: Optional[int]
+    layer: Optional[Any]
     text: str
     children: List['NamedTuple']
 
     @classmethod
-    def new(cls, layer_id=None, text='', children=None):
+    def new(cls, layer=None, text='', children=None):
         if children is None:
             children = []
-        return cls(layer_id, text, children)
+        return cls(layer, text, children)
 
     def serialize(self):
-        return {'layer_id': self.layer_id,
+        return {'layer': self.layer and self.layer.serialize(),
                 'text': self.text,
                 'children': [c.serialize() for c in self.children]}
 
@@ -79,18 +79,18 @@ class ContentSplitter:
         self.reopened = False
 
     def close_inlines(self, ends, idx):
-        ends = {e.layer_id for e in ends}
+        ends = {e.layer.data for e in ends}
         while ends:
             span = self.stack.pop()
             span_s = self.span_stack.pop()
-            if span.layer_id in ends:
-                ends.remove(span.layer_id)
+            if span.layer in ends:
+                ends.remove(span.layer)
             else:
                 self.events_by_idx[idx].add_start(span_s)
 
     def open_inlines(self, events):
         if events.starts:
-            spans = [InlineContent.new(s.layer_id) for s in events.starts]
+            spans = [InlineContent.new(s.layer.data) for s in events.starts]
             spans[-1] = spans[-1]._replace(text=events.text)
             for span in spans:
                 self.stack[-1].children.append(span)
