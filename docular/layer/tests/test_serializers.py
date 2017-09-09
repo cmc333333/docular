@@ -17,7 +17,7 @@ def test_content_no_spans():
 def test_content_only_text():
     struct = mommy.make(DocStruct, text='Some text')
     result = serializers.ContentSplitter(struct)()
-    assert result == [serializers.ContentSpan(None, 'Some text', [])]
+    assert result == [serializers.InlineContent(None, 'Some text', [])]
 
 
 @pytest.mark.django_db
@@ -26,7 +26,7 @@ def test_content_full_span():
     layer = mommy.make(Layer)
     struct.spans.create(start=0, end=len(struct.text), layer=layer)
     result = serializers.ContentSplitter(struct)()
-    assert result == [serializers.ContentSpan(layer.pk, 'Some text', [])]
+    assert result == [serializers.InlineContent(layer.pk, 'Some text', [])]
 
 
 @pytest.mark.django_db
@@ -37,9 +37,9 @@ def test_content_middle_text():
                         layer=layer)
     result = serializers.ContentSplitter(struct)()
     assert result == [
-        serializers.ContentSpan(None, 'Some ', []),
-        serializers.ContentSpan(layer.pk, 'middle', []),
-        serializers.ContentSpan(None, ' text', []),
+        serializers.InlineContent(None, 'Some ', []),
+        serializers.InlineContent(layer.pk, 'middle', []),
+        serializers.InlineContent(None, ' text', []),
     ]
 
 
@@ -54,9 +54,9 @@ def test_content_adjacent_spans():
                         layer=third)
     result = serializers.ContentSplitter(struct)()
     assert result == [
-        serializers.ContentSpan(first.pk, 'Some ', []),
-        serializers.ContentSpan(second.pk, 'middle ', []),
-        serializers.ContentSpan(third.pk, 'text', []),
+        serializers.InlineContent(first.pk, 'Some ', []),
+        serializers.InlineContent(second.pk, 'middle ', []),
+        serializers.InlineContent(third.pk, 'text', []),
     ]
 
 
@@ -70,11 +70,32 @@ def test_content_nested():
                         layer=second)
     result = serializers.ContentSplitter(struct)()
     assert result == [
-        serializers.ContentSpan(None, 'Some ', []),
-        serializers.ContentSpan(outer.pk, '', [
-            serializers.ContentSpan(first.pk, 'more', []),
-            serializers.ContentSpan(None, ' ', []),
-            serializers.ContentSpan(second.pk, 'text', []),
-            serializers.ContentSpan(None, ' here', []),
+        serializers.InlineContent(None, 'Some ', []),
+        serializers.InlineContent(outer.pk, '', [
+            serializers.InlineContent(first.pk, 'more', []),
+            serializers.InlineContent(None, ' ', []),
+            serializers.InlineContent(second.pk, 'text', []),
+            serializers.InlineContent(None, ' here', []),
+        ]),
+    ]
+
+
+@pytest.mark.django_db
+def test_content_overlapping():
+    struct = mommy.make(DocStruct, text='123456789')
+    first, second, third = mommy.make(Layer, _quantity=3)
+    struct.spans.create(start=0, end=5, layer=first)
+    struct.spans.create(start=3, end=7, layer=second)
+    struct.spans.create(start=4, end=9, layer=third)
+    result = serializers.ContentSplitter(struct)()
+    assert result == [
+        serializers.InlineContent(first.pk, '123', [
+            serializers.InlineContent(second.pk, '4', [
+                serializers.InlineContent(third.pk, '5', []),
+            ]),
+        ]),
+        serializers.InlineContent(third.pk, '', [
+            serializers.InlineContent(second.pk, '67', []),
+            serializers.InlineContent(None, '89', []),
         ]),
     ]

@@ -1,5 +1,6 @@
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from functools import lru_cache
+from io import StringIO
 from typing import List, NamedTuple, Optional, Set
 
 from rest_framework import serializers
@@ -12,14 +13,23 @@ from docular.structure.serializers import RootSerializer
 class Events(NamedTuple):
     starts: List[Span]
     ends: Set[Span]
+    text_builder: StringIO
+
+    @property
+    def text(self):
+        return self.text_builder.getvalue()
+
+    @text.setter
+    def text(self, value):
+        self.text_builder.write(value)
 
     @classmethod
-    def new(cls, starts=None, ends=None):
+    def new(cls, starts=None, ends=None, text=''):
         if starts is None:
             starts = []
         if ends is None:
             ends = set()
-        return cls(starts, ends)
+        return cls(starts, ends, StringIO(text))
 
     def add_start(self, span: Span):
         """Maintain the list in descending order by length."""
@@ -31,7 +41,7 @@ class Events(NamedTuple):
         self.starts.insert(idx, span)
 
 
-class ContentSpan(NamedTuple):
+class InlineContent(NamedTuple):
     layer_id: Optional[int]
     text: str
     children: List['NamedTuple']
@@ -56,30 +66,42 @@ class ContentSplitter:
             self.events_by_idx[len(doc_struct.text)] = Events.new()
 
         breaks = list(sorted(self.events_by_idx))
-        self.text_by_idx = OrderedDict()
         for start, end in zip(breaks[:-1], breaks[1:]):
-            self.text_by_idx[start] = doc_struct.text[start:end]
+            self.events_by_idx[start].text = doc_struct.text[start:end]
+
+        self.stack = [InlineContent.new()]
+        self.span_stack = []
+        self.reopened = False
+
+    def close_inlines(self, ends, idx):
+        ends = {e.layer_id for e in ends}
+        while ends:
+            span = self.stack.pop()
+            span_s = self.span_stack.pop()
+            if span.layer_id in ends:
+                ends.remove(span.layer_id)
+            else:
+                self.events_by_idx[idx].add_start(span_s)
+
+    def open_inlines(self, events):
+        if events.starts:
+            spans = [InlineContent.new(s.layer_id) for s in events.starts]
+            spans[-1] = spans[-1]._replace(text=events.text)
+            for span in spans:
+                self.stack[-1].children.append(span)
+                self.stack.append(span)
+            self.span_stack.extend(events.starts)
+        elif events.text:
+            span = InlineContent.new(text=events.text)
+            self.stack[-1].children.append(span)
 
     @lru_cache()
     def __call__(self):
-        stack = [ContentSpan.new()]
-        for start, text in self.text_by_idx.items():
-            print(repr(text))
-            for _ in self.events_by_idx[start].ends:
-                stack.pop()
+        for _idx, events in sorted(self.events_by_idx.items()):
+            self.close_inlines(events.ends, _idx)
+            self.open_inlines(events)
 
-            spans = [ContentSpan.new(started.layer_id)
-                     for started in self.events_by_idx[start].starts]
-            if spans:
-                spans[-1] = spans[-1]._replace(text=text)
-                for span in spans:
-                    stack[-1].children.append(span)
-                    stack.append(span)
-            else:
-                span = ContentSpan.new(text=text)
-                stack[-1].children.append(span)
-
-        return stack[0].children
+        return self.stack[0].children
 
 
 class InlineSerializer(RootSerializer):
