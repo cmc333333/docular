@@ -22,13 +22,17 @@ function color({ min, max, name }) {
 
 function Content({ content }) {
   const style = {};
-  if (content.layer_id) {
-    const layerStr = `${content.layer_id}`;
+  let altStr;
+  if (content.layer) {
+    const layerStr = `${content.layer.name}`;
     style.backgroundColor = color({ min: 192, name: layerStr });
     style.border = `1px solid ${color({ min: 64, max: 128, name: layerStr })}`;
+
+    altStr = Object.entries(content.layer).map(
+      ([key, val]) => `${key}: ${val}`).join('\n');
   }
   return (
-    <span style={style}>
+    <span style={style} title={altStr}>
       { content.text }
       { content.children.map(c => <Content content={c} />) }
     </span>
