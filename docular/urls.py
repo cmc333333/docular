@@ -1,7 +1,7 @@
 from django.conf.urls import include, url
 
+from docular.layer.views import NestedDetail
 from docular.structure.routes import router
-from docular.structure.views import NestedDetail
 
 
 def match(name):

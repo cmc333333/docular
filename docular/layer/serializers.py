@@ -52,6 +52,11 @@ class InlineContent(NamedTuple):
             children = []
         return cls(layer_id, text, children)
 
+    def serialize(self):
+        return {'layer_id': self.layer_id,
+                'text': self.text,
+                'children': [c.serialize() for c in self.children]}
+
 
 class ContentSplitter:
     def __init__(self, doc_struct):
@@ -101,7 +106,7 @@ class ContentSplitter:
             self.close_inlines(events.ends, _idx)
             self.open_inlines(events)
 
-        return self.stack[0].children
+        return [c.serialize() for c in self.stack[0].children]
 
 
 class InlineSerializer(RootSerializer):
@@ -110,7 +115,7 @@ class InlineSerializer(RootSerializer):
     class Meta:
         model = DocStruct
         fields = ('identifier', 'tag', 'tag_number', 'marker', 'title',
-                  'depth', 'expression', 'children', 'content')
+                  'depth', 'expression', 'children', 'content', 'meta')
 
     def get_content(self, instance):
         return ContentSplitter(instance)()

@@ -51,6 +51,7 @@ class CursorSerializer(ModelSerializer):
         return self.__class__(instance.cursor.children(), many=True).data
 
     def get_meta(self, instance):
+        print("meta")
         return {}
 
 
