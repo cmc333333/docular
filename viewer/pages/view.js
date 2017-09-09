@@ -20,6 +20,29 @@ function color({ min, max, name }) {
   return `rgb(${red}, ${blue}, ${green})`;
 }
 
+function Content({ content }) {
+  const style = {};
+  if (content.layer_id) {
+    const layerStr = `${content.layer_id}`;
+    style.backgroundColor = color({ min: 192, name: layerStr });
+    style.border = `1px solid ${color({ min: 64, max: 128, name: layerStr })}`;
+  }
+  return (
+    <span style={style}>
+      { content.text }
+      { content.children.map(c => <Content content={c} />) }
+    </span>
+  );
+}
+Content.propTypes = {
+  content: PropTypes.shape({
+    layer_id: PropTypes.number,
+    text: PropTypes.string.isRequired,
+    children: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
+  }).isRequired,
+};
+
+
 function Struct({ nav, struct }) {
   let header;
   const style = {
@@ -50,7 +73,7 @@ function Struct({ nav, struct }) {
       </div>
       <div style={{ display: 'inline-block', width: '90%' }}>
         { header }
-        { struct.text }
+        { struct.content.map(c => <Content content={c} />) }
       </div>
       { struct.children.map(c =>
         <Struct key={c.identifier} nav={nav} struct={c} />) }
