@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.generics import RetrieveAPIView
 
 from docular.layer.serializers import InlineSerializer
@@ -9,12 +10,13 @@ class NestedDetail(RetrieveAPIView):
     serializer_class = InlineSerializer
 
     def get_object(self):
-        root_struct = DocStruct.objects.get(
+        root_struct = get_object_or_404(
+            DocStruct,
             expression__work__doc_type=self.kwargs['doc_type'],
-            expression__work__doc_subtype=self.kwargs['doc_subtype'],
+            expression__work__doc_subtype=self.kwargs['doc_subtype'] or '',
             expression__work__work_id=self.kwargs['work_id'],
             expression__expression_id=self.kwargs['expression_id'],
-            expression__author=self.kwargs['author'],
+            expression__author=self.kwargs['author'] or '',
             identifier=self.kwargs['label']
         )
         query = DocStruct.objects.\
