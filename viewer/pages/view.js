@@ -98,11 +98,16 @@ export default function View({ struct }) {
   let query;
   const nav = {
     docType: struct.meta.frbr.work.doc_type,
-    docSubtype: struct.meta.frbr.work.doc_subtype,
     workId: struct.meta.frbr.work.work_id,
     expressionId: struct.meta.frbr.expression.expression_id,
-    author: struct.meta.frbr.expression.author,
   };
+  if (struct.meta.frbr.work.doc_subtype.length) {
+    nav.docSubType = struct.meta.frbr.work.doc_subtype;
+  }
+  if (struct.meta.frbr.expression.author.length) {
+    nav.author = struct.meta.frbr.expression.author;
+  }
+
   if (struct.meta.prev_doc) {
     query = Object.assign({}, nav, { label: struct.meta.prev_doc.identifier });
     prev = (
@@ -150,8 +155,15 @@ View.propTypes = {
 
 View.getInitialProps = async ({ query }) => {
   const { docType, docSubtype, workId, expressionId, author, label } = query;
-  const url = (`${docType}/${docSubtype}/${workId}/@${expressionId}`
-               + `/${author}/~${label}.json`);
+  let url = docType;
+  if (docSubtype) {
+    url += `/${docSubtype}`;
+  }
+  url += `/${workId}/@${expressionId}`;
+  if (author) {
+    url += `/${author}`;
+  }
+  url += `/~${label}.json`;
   const { data } = await client.get(url);
 
   return { struct: data };
