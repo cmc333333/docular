@@ -8,6 +8,7 @@ argh==0.26.2              # via watchdog
 attrs==17.2.0             # via flake8-bugbear
 bandit==1.4.0
 colorama==0.3.9           # via pytest-watch
+commonmark==0.7.4
 decorator==4.1.2
 dj-database-url==0.4.2
 django-cors-headers==2.1.0
@@ -26,6 +27,7 @@ flake8-print==2.0.2
 flake8-string-format==0.2.3
 flake8-tuple==0.2.13
 flake8==3.4.1
+future==0.16.0
 gitdb2==2.0.2             # via gitpython
 gitpython==2.1.5          # via bandit
 ipython-genutils==0.2.0   # via traitlets
@@ -52,6 +54,7 @@ pygments==2.2.0           # via ipython
 pytest-django==3.1.2
 pytest-watch==4.1.0
 pytest==3.2.1
+python-dateutil==2.6.1
 pytz==2017.2
 pyyaml==3.12              # via bandit, watchdog
 simplegeneric==0.8.1      # via ipython

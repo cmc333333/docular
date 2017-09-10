@@ -1,3 +1,4 @@
+commonmark
 dj-database-url
 django
 django-cors-headers
@@ -6,4 +7,5 @@ drf_tweaks
 jsonfield
 lxml
 networkx
+python-dateutil
 psycopg2

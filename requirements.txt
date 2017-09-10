@@ -4,6 +4,7 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
+commonmark==0.7.4
 decorator==4.1.2          # via networkx
 dj-database-url==0.4.2
 django-cors-headers==2.1.0
@@ -11,9 +12,11 @@ django-filter==1.0.4      # via drf-tweaks
 django==1.11.4
 djangorestframework==3.6.4
 drf-tweaks==0.6.1
+future==0.16.0            # via commonmark
 jsonfield==2.0.2
 lxml==3.8.0
 networkx==1.11
 psycopg2==2.7.3.1
+python-dateutil==2.6.1
 pytz==2017.2              # via django
-six==1.10.0               # via drf-tweaks
+six==1.10.0               # via drf-tweaks, python-dateutil
