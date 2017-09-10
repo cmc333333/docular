@@ -67,7 +67,29 @@ class ExternalCitation(NamedTuple):
         return resp
 
 
+class Emphasis:
+    @classmethod
+    def from_dict(cls, attrs):
+        return cls
+
+    @classmethod
+    def serialize(cls):
+        return {'name': 'emphasis'}
+
+
+class Strong:
+    @classmethod
+    def from_dict(cls, attrs):
+        return cls
+
+    @classmethod
+    def serialize(cls):
+        return {'name': 'strong'}
+
+
 registry['define'] = Define
 registry['term'] = Term
 registry['internal-citation'] = InternalCitation
 registry['external-citation'] = ExternalCitation
+registry['emphasis'] = Emphasis
+registry['strong'] = Strong

@@ -8,5 +8,8 @@ class _Registry:
     def __getitem__(self, key):
         return self._registry[key]
 
+    def __contains__(self, key):
+        return key in self._registry
+
 
 registry = _Registry()

@@ -1,3 +1,4 @@
+from collections import Counter
 from typing import Optional
 
 import networkx as nx
@@ -30,7 +31,8 @@ class Cursor:
     def add_child(self, tag: str, tag_number: Optional[str] = None, **attrs):
         order = self._tree.out_degree(self._idx)
         if tag_number is None:
-            tag_number = str(order + 1)
+            child_tag_counts = Counter(c.struct.tag for c in self.children())
+            tag_number = str(child_tag_counts[tag] + 1)
         identifier = '{0}__{1}_{2}'.format(self._idx, tag, tag_number)
         self._tree.add_node(identifier, struct=DocStruct(
             identifier=identifier, tag=tag, tag_number=tag_number,
@@ -97,9 +99,9 @@ class Cursor:
         return Cursor(graph, root_struct.identifier)
 
 
-def new_tree(tag, tag_number, **attrs):
+def new_tree(tag, tag_number='', **attrs):
     graph = nx.DiGraph()
-    identifier = '{0}_{1}'.format(tag, tag_number)
+    identifier = f"{tag}_{tag_number}" if tag_number else tag
     graph.add_node(identifier, struct=DocStruct(
         identifier=identifier, tag=tag, tag_number=tag_number, depth=0,
         **attrs

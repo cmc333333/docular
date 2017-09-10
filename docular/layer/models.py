@@ -7,7 +7,7 @@ from docular.structure.models import DocStruct
 
 class Layer(models.Model):
     category = models.CharField(max_length=64)
-    attributes = JSONField()
+    attributes = JSONField(blank=True, null=True)
     meta_for = models.ManyToManyField(DocStruct, blank=True)
 
     @property

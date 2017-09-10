@@ -8,8 +8,8 @@ import CommonMark
 from dateutil.parser import parse as parse_datetime
 from django.core.management.base import BaseCommand
 
-from docular.structure.models import DocStruct, Expression, Work
-from docular.structure.network import new_tree
+from docular.importer import markdown as markdown_transforms
+from docular.structure.models import Expression, Work
 
 logger = logging.getLogger(__name__)
 
@@ -58,23 +58,28 @@ class Command(BaseCommand):
             author=options['author']
         )
 
-        root = new_tree('root', '0', expression=expression)
-        cursor = root
-
-        for node, entering in ast.walker():
+        cursor = None
+        for ast_node, entering in ast.walker():
             if entering:
-                if node.literal:
-                    cursor = cursor.add_child(
-                        node.t, expression=expression, text=node.literal)
-                else:
-                    cursor = cursor.add_child(node.t, expression=expression)
-            if (node.literal is not None or not entering
-                    or node.t in ('softbreak', 'thematic_break')):
-                cursor = cursor.parent
+                fn_name = f"enter_{ast_node.t}"
+            else:
+                fn_name = f"exit_{ast_node.t}"
 
-        root.renumber()
-        DocStruct.objects.bulk_create(n.struct for n in root.walk())
+            if hasattr(markdown_transforms, fn_name):
+                cursor = getattr(markdown_transforms, fn_name)(
+                    cursor, ast_node)
+            elif fn_name not in markdown_transforms.skips:
+                logger.warning("Don't know how to parse %s", fn_name)
+
+        cursor.renumber()
+        for node in cursor.walk():
+            node.struct.expression = expression
+            node.struct.save()
+
+            for span in node.extra.get('spans', []):
+                span.doc_struct = node.struct
+                span.save()
 
         logger.info('Created %s DocStructs for %s/%s/%s/@%s',
-                    root.subtree_size(), work.doc_type, work.doc_subtype,
+                    cursor.subtree_size(), work.doc_type, work.doc_subtype,
                     work.work_id, expression.expression_id)
