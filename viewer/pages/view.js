@@ -102,7 +102,7 @@ export default function View({ struct }) {
     expressionId: struct.meta.frbr.expression.expression_id,
   };
   if (struct.meta.frbr.work.doc_subtype.length) {
-    nav.docSubType = struct.meta.frbr.work.doc_subtype;
+    nav.docSubtype = struct.meta.frbr.work.doc_subtype;
   }
   if (struct.meta.frbr.expression.author.length) {
     nav.author = struct.meta.frbr.expression.author;
