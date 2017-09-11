@@ -2,4 +2,4 @@
 
 set -e
 
-docker-compose run --rm api setup_python_then ptw "$@"
+docker-compose run --rm api .docker/setup_python_then ptw "$@"

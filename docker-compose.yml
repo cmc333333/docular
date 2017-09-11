@@ -16,12 +16,11 @@ services:
       - 8001:8001
     stdin_open: true
     tty: true
-    command: setup_python_then wait_for_db_then run_api.sh
+    command: .docker/setup_python_then .docker/wait_for_db_then .docker/run_api.sh
     environment:
       DATABASE_URL: postgres://postgres@db/postgres
       DEBUG: ${DEBUG:-true}
       PORT: 8001
-      PATH: .docker/:$PATH
       TMPDIR: /tmp
       VCAP_APPLICATION: >
         {"uris": ["*"]}

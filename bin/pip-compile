@@ -2,4 +2,4 @@
 
 set -e
 
-docker-compose run --rm --no-deps api activate_then pip-compile "$@"
+docker-compose run --rm --no-deps api .docker/activate_then pip-compile "$@"
