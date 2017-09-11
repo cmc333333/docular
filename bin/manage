@@ -3,5 +3,5 @@
 set -e
 
 docker-compose run --rm api \
-  setup_python_then wait_for_db_then \
+  .docker/setup_python_then .docker/wait_for_db_then \
   ./manage.py "$@"

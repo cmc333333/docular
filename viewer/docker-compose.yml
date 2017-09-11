@@ -10,11 +10,10 @@ services:
       - 8000:8000
     stdin_open: true
     tty: true
-    command: setup_node_then run_ui.sh
+    command: .docker/setup_node_then .docker/run_ui.sh
     environment:
       API_BASE: ${API_BASE}
       NODE_ENV: ${NODE_ENV:-dev}
-      PATH: .docker/:$PATH
       PORT: 8000
 
 volumes:
