@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+
+docker-compose up -d db
+docker exec -it docular_db_1 psql -U postgres postgres "$@"
