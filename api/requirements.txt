@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
+certifi==2017.7.27.1      # via requests
+chardet==3.0.4            # via requests
 commonmark==0.7.4
 decorator==4.1.2          # via networkx
 dj-database-url==0.4.2
@@ -13,10 +15,13 @@ django==1.11.4
 djangorestframework==3.6.4
 drf-tweaks==0.6.1
 future==0.16.0            # via commonmark
+idna==2.6                 # via requests
 jsonfield==2.0.2
 lxml==3.8.0
 networkx==1.11
 psycopg2==2.7.3.1
 python-dateutil==2.6.1
 pytz==2017.2              # via django
+requests==2.18.4
 six==1.10.0               # via drf-tweaks, python-dateutil
+urllib3==1.22             # via requests

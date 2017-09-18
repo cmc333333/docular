@@ -9,3 +9,4 @@ lxml
 networkx
 python-dateutil
 psycopg2
+requests

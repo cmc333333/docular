@@ -1,5 +1,6 @@
 from collections import Counter
-from typing import Optional
+from enum import Enum
+from typing import Optional, Union
 
 import networkx as nx
 from networkx.algorithms.dag import descendants, topological_sort
@@ -28,7 +29,10 @@ class Cursor:
             raise KeyError('No {0} element'.format(identifier))
         return self.__class__(self._tree, identifier)
 
-    def add_child(self, tag: str, tag_number: Optional[str] = None, **attrs):
+    def add_child(self, tag: Union[str, Enum],
+                  tag_number: Optional[str] = None, **attrs):
+        if isinstance(tag, Enum):
+            tag = tag.value
         order = self._tree.out_degree(self._idx)
         if tag_number is None:
             child_tag_counts = Counter(c.struct.tag for c in self.children())
@@ -99,7 +103,9 @@ class Cursor:
         return Cursor(graph, root_struct.identifier)
 
 
-def new_tree(tag, tag_number='', **attrs):
+def new_tree(tag: Union[str, Enum], tag_number='', **attrs):
+    if isinstance(tag, Enum):
+        tag = tag.value
     graph = nx.DiGraph()
     identifier = f"{tag}_{tag_number}" if tag_number else tag
     graph.add_node(identifier, struct=DocStruct(

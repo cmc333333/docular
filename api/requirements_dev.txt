@@ -7,6 +7,8 @@
 argh==0.26.2              # via watchdog
 attrs==17.2.0             # via flake8-bugbear
 bandit==1.4.0
+certifi==2017.7.27.1
+chardet==3.0.4
 colorama==0.3.9           # via pytest-watch
 commonmark==0.7.4
 decorator==4.1.2
@@ -30,6 +32,7 @@ flake8==3.4.1
 future==0.16.0
 gitdb2==2.0.2             # via gitpython
 gitpython==2.1.5          # via bandit
+idna==2.6
 ipython-genutils==0.2.0   # via traitlets
 ipython==6.1.0
 isort==4.2.15             # via flake8-isort
@@ -57,11 +60,13 @@ pytest==3.2.1
 python-dateutil==2.6.1
 pytz==2017.2
 pyyaml==3.12              # via bandit, watchdog
+requests==2.18.4
 simplegeneric==0.8.1      # via ipython
 six==1.10.0
 smmap2==2.0.3             # via gitdb2
 stevedore==1.25.0         # via bandit
 testfixtures==5.1.1       # via flake8-isort
 traitlets==4.3.2          # via ipython
+urllib3==1.22
 watchdog==0.8.3           # via pytest-watch
 wcwidth==0.1.7            # via prompt-toolkit

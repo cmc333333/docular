@@ -115,7 +115,7 @@ class InlineSerializer(RootSerializer):
     class Meta:
         model = DocStruct
         fields = ('identifier', 'tag', 'tag_number', 'marker', 'title',
-                  'depth', 'expression', 'children', 'content', 'meta')
+                  'depth', 'children', 'content', 'meta')
 
     def get_content(self, instance):
         return ContentSplitter(instance)()
