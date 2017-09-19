@@ -39,7 +39,6 @@ export function UnknownStruct({ nav, struct }) {
     header = <HTag style={{ margin: 0 }}>{struct.title}</HTag>;
   }
 
-
   return (
     <div style={style}>
       <div style={markerStyle}>
@@ -49,7 +48,11 @@ export function UnknownStruct({ nav, struct }) {
       </div>
       <div style={{ display: 'inline-block', width: '90%' }}>
         { header }
-        { struct.content.map(c => <RenderContent content={c} />) }
+        { struct.content.map((c, idx) =>
+          /* eslint-disable react/no-array-index-key */
+          <RenderContent content={c} key={idx} />)
+          /* eslint-enable react/no-array-index-key */
+        }
       </div>
       { struct.children.map(c =>
         <RenderStruct key={c.identifier} nav={nav} struct={c} />) }
