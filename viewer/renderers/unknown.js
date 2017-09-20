@@ -1,8 +1,9 @@
+import PropTypes from 'prop-types';
 import React from 'react';
+import { connect } from 'react-redux';
 import hash from 'string-hash';
 
 import { Link } from '../routes';
-import { RenderStruct, RenderContent } from './render';
 
 
 function color({ min, max, name }) {
@@ -19,7 +20,33 @@ function color({ min, max, name }) {
 }
 
 
-export function UnknownStruct({ nav, struct }) {
+export function Marker({ docFRBR, struct }) {
+  const markerQuery = Object.assign({}, docFRBR, { label: struct.identifier });
+  const style = {
+    display: 'inline-block',
+    height: '100%',
+    verticalAlign: 'top',
+    width: '10%',
+  };
+  return (
+    <div style={style}>
+      <Link route="view" params={markerQuery}>
+        <a>{struct.marker || '_'}</a>
+      </Link>
+    </div>
+  );
+}
+Marker.propTypes = {
+  docFRBR: PropTypes.shape({}).isRequired,
+  struct: PropTypes.shape({
+    identifier: PropTypes.string.isRequired,
+    marker: PropTypes.string,
+  }).isRequired,
+};
+const MarkerContainer = connect(({ docFRBR }) => ({ docFRBR }))(Marker);
+
+
+export function UnknownStruct({ children, inline, struct }) {
   let header;
   const style = {
     backgroundColor: color({ min: 192, name: struct.tag }),
@@ -27,13 +54,6 @@ export function UnknownStruct({ nav, struct }) {
     margin: '5px',
     padding: '10px',
   };
-  const markerStyle = {
-    display: 'inline-block',
-    height: '100%',
-    verticalAlign: 'top',
-    width: '10%',
-  };
-  const markerQuery = Object.assign({}, nav, { label: struct.identifier });
   if (struct.title) {
     const HTag = `h${struct.depth + 1}`;
     header = <HTag style={{ margin: 0 }}>{struct.title}</HTag>;
@@ -41,43 +61,32 @@ export function UnknownStruct({ nav, struct }) {
 
   return (
     <div style={style}>
-      <div style={markerStyle}>
-        <Link route="view" params={markerQuery}>
-          <a>{struct.marker || '_'}</a>
-        </Link>
-      </div>
+      <MarkerContainer struct={struct} />
       <div style={{ display: 'inline-block', width: '90%' }}>
         { header }
-        { struct.content.map((c, idx) =>
-          /* eslint-disable react/no-array-index-key */
-          <RenderContent content={c} key={idx} />)
-          /* eslint-enable react/no-array-index-key */
-        }
+        { inline }
       </div>
-      { struct.children.map(c =>
-        <RenderStruct key={c.identifier} nav={nav} struct={c} />) }
+      { children }
     </div>
   );
 }
-UnknownStruct.propTypes = RenderStruct.propTypes;
 
 
-export function UnknownContent({ content }) {
+export function UnknownInline({ children, inline }) {
   const style = {};
   let altStr;
-  if (content.layer) {
-    const layerStr = `${content.layer.name}`;
+  if (inline.layer) {
+    const layerStr = `${inline.layer.name}`;
     style.backgroundColor = color({ min: 192, name: layerStr });
     style.border = `1px solid ${color({ min: 64, max: 128, name: layerStr })}`;
 
-    altStr = Object.entries(content.layer).map(
+    altStr = Object.entries(inline.layer).map(
       ([key, val]) => `${key}: ${val}`).join('\n');
   }
   return (
     <span style={style} title={altStr}>
-      { content.text }
-      { content.children.map(c => <RenderContent content={c} />) }
+      { inline.text }
+      { children }
     </span>
   );
 }
-UnknownContent.propTypes = RenderContent.propTypes;

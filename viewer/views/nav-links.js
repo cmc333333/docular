@@ -3,10 +3,10 @@ import React from 'react';
 
 import { Link } from '../routes';
 
-export function ParentLink({ doc, nav }) {
+export function ParentLink({ doc, docFRBR }) {
   if (!doc) return null;
 
-  const query = Object.assign({}, nav, { label: doc.identifier });
+  const query = Object.assign({}, docFRBR, { label: doc.identifier });
   return (
     <div style={{ textAlign: 'center' }}>
       <Link route="view" params={query}><a>
@@ -19,22 +19,16 @@ ParentLink.propTypes = {
   doc: PropTypes.shape({
     identifier: PropTypes.string.isRequired,
     marker: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
+    title: PropTypes.string,
   }),
-  nav: PropTypes.shape({
-    docType: PropTypes.string.isRequired,
-    workId: PropTypes.string.isRequired,
-    expressionId: PropTypes.string.isRequired,
-    docSubtype: PropTypes.string,
-    author: PropTypes.string,
-  }).isRequired,
+  docFRBR: PropTypes.shape({}).isRequired,
 };
 ParentLink.defaultProps = { doc: null };
 
-export function PrevLink({ doc, nav }) {
+export function PrevLink({ doc, docFRBR }) {
   if (!doc) return null;
 
-  const query = Object.assign({}, nav, { label: doc.identifier });
+  const query = Object.assign({}, docFRBR, { label: doc.identifier });
   return (
     <div style={{ display: 'inline-block', width: '49%' }}>
       <Link route="view" params={query}><a style={{ float: 'left' }}>
@@ -47,22 +41,16 @@ PrevLink.propTypes = {
   doc: PropTypes.shape({
     identifier: PropTypes.string.isRequired,
     marker: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
+    title: PropTypes.string,
   }),
-  nav: PropTypes.shape({
-    docType: PropTypes.string.isRequired,
-    workId: PropTypes.string.isRequired,
-    expressionId: PropTypes.string.isRequired,
-    docSubtype: PropTypes.string,
-    author: PropTypes.string,
-  }).isRequired,
+  docFRBR: PropTypes.shape({}).isRequired,
 };
 PrevLink.defaultProps = { doc: null };
 
-export function NextLink({ doc, nav }) {
+export function NextLink({ doc, docFRBR }) {
   if (!doc) return null;
 
-  const query = Object.assign({}, nav, { label: doc.identifier });
+  const query = Object.assign({}, docFRBR, { label: doc.identifier });
   return (
     <div style={{ display: 'inline-block', textAlign: 'right', width: '50%' }}>
       <Link route="view" params={query}><a>
@@ -75,14 +63,8 @@ NextLink.propTypes = {
   doc: PropTypes.shape({
     identifier: PropTypes.string.isRequired,
     marker: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
+    title: PropTypes.string,
   }),
-  nav: PropTypes.shape({
-    docType: PropTypes.string.isRequired,
-    workId: PropTypes.string.isRequired,
-    expressionId: PropTypes.string.isRequired,
-    docSubtype: PropTypes.string,
-    author: PropTypes.string,
-  }).isRequired,
+  docFRBR: PropTypes.shape({}).isRequired,
 };
 NextLink.defaultProps = { doc: null };
