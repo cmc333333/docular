@@ -22,8 +22,8 @@ export default function FooterNav({ struct }) {
   console.log(struct);
   return (
     <section>
-      <PrevSect prev={struct.meta.prev_doc } />
-      <NextSect next={struct.meta.next_doc } />
+      <PrevSect prev={struct.meta.prev_peer} />
+      <NextSect next={struct.meta.next_peer} />
     </section>
   );
 }

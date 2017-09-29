@@ -58,9 +58,19 @@ class DocStruct(models.Model):
         return self.__class__.objects.filter(
             expression=self.expression, right=self.left - 1).first()
 
+    def prev_peer(self):
+        return self.__class__.objects.filter(
+            expression=self.expression, depth=self.depth, right__lt=self.left
+        ).order_by('-right').first()
+
     def following(self):
         return self.__class__.objects.filter(
             expression=self.expression, left=self.right + 1).first()
+
+    def next_peer(self):
+        return self.__class__.objects.filter(
+            expression=self.expression, depth=self.depth, left__gt=self.right
+        ).order_by('left').first()
 
     def parent(self):
         return self.__class__.objects.filter(

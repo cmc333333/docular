@@ -61,14 +61,23 @@ class CursorSerializer(ModelSerializer):
 class RootSerializer(CursorSerializer):
     def get_meta(self, instance):
         meta = super().get_meta(instance)
-        if self.context:    # Only the root gets context
-            expression = ExpressionSerializer().to_representation(
-                instance.expression)
-            meta.update(
-                prev_doc=NavSerializer.or_none(instance.previous()),
-                next_doc=NavSerializer.or_none(instance.following()),
-                parent_doc=NavSerializer.or_none(instance.parent()),
-                frbr={'work': expression.pop('work'),
-                      'expression': expression},
-            )
+        expression = ExpressionSerializer().to_representation(
+            instance.expression)
+        meta.update(
+            prev_doc=NavSerializer.or_none(instance.previous()),
+            prev_peer=NavSerializer.or_none(instance.prev_peer()),
+            next_doc=NavSerializer.or_none(instance.following()),
+            next_peer=NavSerializer.or_none(instance.next_peer()),
+            parent_doc=NavSerializer.or_none(instance.parent()),
+            frbr={'work': expression.pop('work'),
+                  'expression': expression},
+        )
         return meta
+
+    def get_children(self, instance):
+        context = self.child_context()
+        if context.get('max_depth', 0) < 0:
+            return []
+        return CursorSerializer(
+            instance.cursor.children(), context=self.context, many=True
+        ).data
