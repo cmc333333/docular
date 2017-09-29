@@ -3,7 +3,7 @@ services:
   ui:
     image: node:6.11.2
     volumes:
-      - $PWD:/usr/src/app
+      - $PWD:/usr/src/app:delegated
       - libs:/usr/src/app/node_modules/
     working_dir: /usr/src/app
     ports:

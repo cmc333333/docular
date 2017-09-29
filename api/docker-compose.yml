@@ -8,7 +8,7 @@ services:
   api:
     image: python:3.6.2
     volumes:
-      - $PWD:/usr/src/app
+      - $PWD:/usr/src/app:delegated
       - dev-libs:/usr/src/app/.venv-dev/
       - prod-libs:/usr/src/app/.venv-prod/
     working_dir: /usr/src/app
