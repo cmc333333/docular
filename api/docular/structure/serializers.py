@@ -51,8 +51,23 @@ class CursorSerializer(ModelSerializer):
         struct.cursor = instance
         return super().to_representation(struct)
 
+    def child_context(self):
+        context = dict(self.context)    # shallow copy
+        if 'max_depth' in context:
+            context['max_depth'] = context['max_depth'] - 1
+        elif 'request' in context:
+            max_depth = context['request'].GET.get('max_depth', '')
+            if max_depth.isnumeric():
+                context['max_depth'] = int(max_depth) - 1
+        return context
+
     def get_children(self, instance):
-        return self.__class__(instance.cursor.children(), many=True).data
+        context = self.child_context()
+        if context.get('max_depth', 0) < 0:
+            return []
+        return self.__class__(
+            instance.cursor.children(), context=self.context, many=True
+        ).data
 
     def get_meta(self, instance):
         return {}
