@@ -4,7 +4,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import client from '../client';
-import { changeLocation, makeStore, setDocFRBR } from '../store';
+import { makeStore, setDocFRBR } from '../store';
 import { RenderStruct } from '../containers/render';
 import { UnknownInline, UnknownStruct } from '../renderers/unknown';
 import { NextLink, ParentLink, PrevLink } from '../views/nav-links';
@@ -41,8 +41,7 @@ View.propTypes = {
     }).isRequired,
   }).isRequired,
 };
-View.getInitialProps = async ({ asPath, query, store }) => {
-  store.dispatch(changeLocation(asPath));
+View.getInitialProps = async ({ query, store }) => {
   const { docType, docSubtype, workId, expressionId, author, label } = query;
   let url = docType;
   if (docSubtype) {
@@ -53,10 +52,10 @@ View.getInitialProps = async ({ asPath, query, store }) => {
     url += `/${author}`;
   }
   url += `/~${label}.json`;
-  const { data } = await client.get(url);
-  store.dispatch(setDocFRBR(data.meta.frbr));
+  const struct = await client.get(url);
+  store.dispatch(setDocFRBR(struct.meta.frbr));
 
-  return { struct: data };
+  return { struct };
 };
 
 export default withRedux(makeStore)(View);
