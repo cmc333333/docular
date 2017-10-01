@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.generics import RetrieveAPIView
 
 from docular.layer.serializers import InlineSerializer
+from docular.structure.filtersets import DocStructFilters
 from docular.structure.models import DocStruct
 from docular.structure.network import Cursor
 
@@ -22,5 +23,6 @@ class NestedDetail(RetrieveAPIView):
         query = DocStruct.objects.\
             select_related('expression', 'expression__work').\
             prefetch_related('spans')
+        query = DocStructFilters(self.request.GET, queryset=query).qs
 
         return Cursor.load(root_struct, query)

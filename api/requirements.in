@@ -2,11 +2,12 @@ commonmark
 dj-database-url
 django
 django-cors-headers
+django-filter
 djangorestframework
 drf_tweaks
 jsonfield
 lxml
 networkx
-python-dateutil
 psycopg2
+python-dateutil
 requests

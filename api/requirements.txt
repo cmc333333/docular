@@ -10,7 +10,7 @@ commonmark==0.7.4
 decorator==4.1.2          # via networkx
 dj-database-url==0.4.2
 django-cors-headers==2.1.0
-django-filter==1.0.4      # via drf-tweaks
+django-filter==1.0.4
 django==1.11.4
 djangorestframework==3.6.4
 drf-tweaks==0.6.1
