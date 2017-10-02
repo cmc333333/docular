@@ -18,9 +18,9 @@ const structRenderers = {
   ...cfr,
 };
 
-export function Eregs({ cfrPart, cfrTitle, struct }) {
+export function Eregs({ cfrPart, cfrTitle, struct, toc }) {
   return (
-    <Layout cfrPart={cfrPart} cfrTitle={cfrTitle}>
+    <Layout cfrPart={cfrPart} cfrTitle={cfrTitle} toc={toc}>
       <RenderStruct {...{ inlineRenderers, struct, structRenderers }} />
       <FooterNav struct={struct} />
     </Layout>
@@ -32,14 +32,29 @@ Eregs.propTypes = {
   struct: PropTypes.shape({}).isRequired,
 };
 
-Eregs.getInitialProps = async ({ query, store }) => {
+async function fetchStruct({ query, store }) {
   const { title, part, expressionId, author, section } = query;
   const url = (`cfr/title_${title}/part_${part}/@${expressionId}/${author}`
                + `/~part_${part}__${section}.json`);
   const struct = await client.get(url);
   store.dispatch(setDocFRBR(struct.meta.frbr));
+  return struct;
+}
 
-  return { cfrPart: part, cfrTitle: title, struct };
+function fetchToC({ author, expressionId, part, title }) {
+  const url = (`cfr/title_${title}/part_${part}/@${expressionId}/${author}`
+               + `/~part_${part}.json`);
+  return client.get(url, { params: {
+    depth__lte: 2,
+    fields: [ 'identifier', 'tag', 'marker', 'title', 'children' ].join(','),
+  }});
+}
+
+Eregs.getInitialProps = async ({ query, store }) => {
+  const [ struct, toc ] = await Promise.all(
+    [ fetchStruct({ query, store }), fetchToC(query) ]);
+  const { part, title } = query;
+  return { cfrPart: part, cfrTitle: title, struct, toc };
 };
 
 export default withRedux(makeStore)(Eregs);

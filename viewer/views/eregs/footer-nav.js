@@ -19,7 +19,6 @@ export function NextSect({ next }) {
 }
 
 export default function FooterNav({ struct }) {
-  console.log(struct);
   return (
     <section>
       <PrevSect prev={struct.meta.prev_peer} />
