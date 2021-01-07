@@ -6,67 +6,67 @@
 #
 argh==0.26.2              # via watchdog
 attrs==17.2.0             # via flake8-bugbear
-bandit==1.4.0
-certifi==2017.7.27.1
-chardet==3.0.4
+bandit==1.4.0             # via -r requirements_dev.in
+certifi==2017.7.27.1      # via -r requirements.txt, requests
+chardet==3.0.4            # via -r requirements.txt, requests
 colorama==0.3.9           # via pytest-watch
-commonmark==0.7.4
-decorator==4.1.2
-dj-database-url==0.4.2
-django-cors-headers==2.1.0
-django-filter==1.0.4
-django==1.11.4
-djangorestframework==3.6.4
+commonmark==0.7.4         # via -r requirements.txt
+decorator==4.1.2          # via -r requirements.txt, ipython, networkx, traitlets
+dj-database-url==0.4.2    # via -r requirements.txt
+django-cors-headers==2.1.0  # via -r requirements.txt
+django-filter==1.0.4      # via -r requirements.txt, drf-tweaks
+django==1.11.4            # via -r requirements.txt, jsonfield, model-mommy
+djangorestframework==3.6.4  # via -r requirements.txt, drf-tweaks
 docopt==0.6.2             # via pytest-watch
-drf-tweaks==0.6.1
-flake8-bugbear==17.4.0
-flake8-builtins==1.0
-flake8-comprehensions==1.4.1
-flake8-isort==2.2.2
-flake8-pep3101==1.1
+drf-tweaks==0.6.1         # via -r requirements.txt
+flake8-bugbear==17.4.0    # via -r requirements_dev.in
+flake8-builtins==1.0      # via -r requirements_dev.in
+flake8-comprehensions==1.4.1  # via -r requirements_dev.in
+flake8-isort==2.2.2       # via -r requirements_dev.in
+flake8-pep3101==1.1       # via -r requirements_dev.in
 flake8-polyfill==1.0.1    # via flake8-isort
-flake8-print==2.0.2
-flake8-string-format==0.2.3
-flake8-tuple==0.2.13
-flake8==3.4.1
-future==0.16.0
+flake8-print==2.0.2       # via -r requirements_dev.in
+flake8-string-format==0.2.3  # via -r requirements_dev.in
+flake8-tuple==0.2.13      # via -r requirements_dev.in
+flake8==3.4.1             # via -r requirements_dev.in, flake8-bugbear, flake8-builtins, flake8-comprehensions, flake8-isort, flake8-pep3101, flake8-polyfill, flake8-print, flake8-string-format, flake8-tuple
+future==0.16.0            # via -r requirements.txt, commonmark
 gitdb2==2.0.2             # via gitpython
 gitpython==2.1.5          # via bandit
-idna==2.6
+idna==2.6                 # via -r requirements.txt, requests
 ipython-genutils==0.2.0   # via traitlets
-ipython==6.1.0
+ipython==6.1.0            # via -r requirements_dev.in
 isort==4.2.15             # via flake8-isort
-jedi==0.10.2
-jsonfield==2.0.2
-lxml==3.8.0
+jedi==0.10.2              # via -r requirements_dev.in, ipython
+jsonfield==2.0.2          # via -r requirements.txt
+lxml==4.6.2               # via -r requirements.txt
 mccabe==0.6.1             # via flake8
-model-mommy==1.4.0
-networkx==1.11
+model-mommy==1.4.0        # via -r requirements_dev.in
+networkx==1.11            # via -r requirements.txt
 pathtools==0.1.2          # via watchdog
 pbr==3.1.1                # via stevedore
-pep8-naming==0.4.1
+pep8-naming==0.4.1        # via -r requirements_dev.in
 pexpect==4.2.1            # via ipython
 pickleshare==0.7.4        # via ipython
 prompt-toolkit==1.0.15    # via ipython
-psycopg2==2.7.3.1
+psycopg2==2.7.3.1         # via -r requirements.txt
 ptyprocess==0.5.2         # via pexpect
 py==1.4.34                # via pytest
 pycodestyle==2.3.1        # via flake8
 pyflakes==1.5.0           # via flake8
 pygments==2.2.0           # via ipython
-pytest-django==3.1.2
-pytest-watch==4.1.0
-pytest==3.2.1
-python-dateutil==2.6.1
-pytz==2017.2
+pytest-django==3.1.2      # via -r requirements_dev.in
+pytest-watch==4.1.0       # via -r requirements_dev.in
+pytest==3.2.1             # via -r requirements_dev.in, pytest-django, pytest-watch
+python-dateutil==2.6.1    # via -r requirements.txt
+pytz==2017.2              # via -r requirements.txt, django
 pyyaml==3.12              # via bandit, watchdog
-requests==2.18.4
+requests==2.18.4          # via -r requirements.txt
 simplegeneric==0.8.1      # via ipython
-six==1.10.0
+six==1.10.0               # via -r requirements.txt, bandit, drf-tweaks, flake8-tuple, model-mommy, prompt-toolkit, python-dateutil, stevedore, traitlets
 smmap2==2.0.3             # via gitdb2
 stevedore==1.25.0         # via bandit
 testfixtures==5.1.1       # via flake8-isort
 traitlets==4.3.2          # via ipython
-urllib3==1.22
+urllib3==1.22             # via -r requirements.txt, requests
 watchdog==0.8.3           # via pytest-watch
 wcwidth==0.1.7            # via prompt-toolkit

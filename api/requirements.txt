@@ -6,22 +6,22 @@
 #
 certifi==2017.7.27.1      # via requests
 chardet==3.0.4            # via requests
-commonmark==0.7.4
+commonmark==0.7.4         # via -r requirements.in
 decorator==4.1.2          # via networkx
-dj-database-url==0.4.2
-django-cors-headers==2.1.0
-django-filter==1.0.4
-django==1.11.4
-djangorestframework==3.6.4
-drf-tweaks==0.6.1
+dj-database-url==0.4.2    # via -r requirements.in
+django-cors-headers==2.1.0  # via -r requirements.in
+django-filter==1.0.4      # via -r requirements.in, drf-tweaks
+django==1.11.4            # via -r requirements.in, jsonfield
+djangorestframework==3.6.4  # via -r requirements.in, drf-tweaks
+drf-tweaks==0.6.1         # via -r requirements.in
 future==0.16.0            # via commonmark
 idna==2.6                 # via requests
-jsonfield==2.0.2
-lxml==3.8.0
-networkx==1.11
-psycopg2==2.7.3.1
-python-dateutil==2.6.1
+jsonfield==2.0.2          # via -r requirements.in
+lxml==4.6.2               # via -r requirements.in
+networkx==1.11            # via -r requirements.in
+psycopg2==2.7.3.1         # via -r requirements.in
+python-dateutil==2.6.1    # via -r requirements.in
 pytz==2017.2              # via django
-requests==2.18.4
+requests==2.18.4          # via -r requirements.in
 six==1.10.0               # via drf-tweaks, python-dateutil
 urllib3==1.22             # via requests
